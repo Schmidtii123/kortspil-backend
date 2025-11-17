@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Lobby;
 use App\Events\CardDrawn;
-use App\Events\CardReset;
+use App\Events\CardFlipped;
 use App\Events\PlayerTurnChanged;
 
 class GameController extends Controller
@@ -46,16 +46,17 @@ class GameController extends Controller
         ]);
     }
 
-    public function resetCard(Request $request)
+    public function flipCard(Request $request)
     {
         $validated = $request->validate([
             'lobby_code' => 'required|string',
+            'flipped' => 'required|boolean',
         ]);
 
         $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
 
-        // Broadcast kort reset til alle
-        broadcast(new CardReset($lobby->lobby_code))->toOthers();
+        // Broadcast flip state til alle
+        broadcast(new CardFlipped($lobby->lobby_code, $validated['flipped']))->toOthers();
 
         return response()->json(['success' => true]);
     }

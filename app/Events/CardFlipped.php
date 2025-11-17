@@ -9,15 +9,17 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class CardReset implements ShouldBroadcast
+class CardFlipped implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $lobbyCode;
+    public $flipped;
 
-    public function __construct($lobbyCode)
+    public function __construct($lobbyCode, $flipped)
     {
         $this->lobbyCode = $lobbyCode;
+        $this->flipped = $flipped;
     }
 
     public function broadcastOn(): array
@@ -29,6 +31,13 @@ class CardReset implements ShouldBroadcast
 
     public function broadcastAs()
     {
-        return 'CardReset';
+        return 'CardFlipped';
+    }
+
+    public function broadcastWith()
+    {
+        return [
+            'flipped' => $this->flipped,
+        ];
     }
 }
