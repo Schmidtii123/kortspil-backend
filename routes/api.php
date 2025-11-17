@@ -21,10 +21,8 @@ Route::prefix('players')->group(function () {
 });
 
 Route::prefix('game')->group(function () {
-    Route::get('/{lobby_code}/state', [GameController::class, 'getState']);
     Route::post('/draw-card', [GameController::class, 'drawCard']);
     Route::post('/set-player-turn', [GameController::class, 'setPlayerTurn']);
-    Route::post('/{lobby_code}/next-round', [GameController::class, 'nextRound']);
 });
 
 Route::prefix('cards')->group(function () {

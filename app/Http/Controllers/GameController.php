@@ -16,14 +16,14 @@ class GameController extends Controller
             'card_number' => 'required|integer|min:1|max:10',
         ]);
 
-        $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
+        $lobby = Lobby::where('lobby_code', $validated['lobby_code'])->firstOrFail();
 
-        // Broadcast card drawn event
+        // Broadcast til alle i lobbyen
         broadcast(new CardDrawn($lobby->lobby_code, $validated['card_number']))->toOthers();
 
         return response()->json([
-            'message' => 'Card drawn',
-            'card_number' => $validated['card_number']
+            'success' => true,
+            'card_number' => $validated['card_number'],
         ]);
     }
 
