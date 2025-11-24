@@ -112,6 +112,8 @@ class LobbyController extends Controller
         $lobby->dm_id = $player->id;
         $lobby->save();
 
+        broadcast(new \App\Events\DungeonMasterChanged($lobby->lobby_code, $player->alias))->toOthers();
+
         return response()->json(['dm' => $player]);
     }
 
@@ -137,6 +139,8 @@ class LobbyController extends Controller
 
         $lobby->dm_id = null;
         $lobby->save();
+
+        broadcast(new \App\Events\DungeonMasterChanged($lobby->lobby_code, null))->toOthers();
 
         return response()->json(['player' => $player]);
     }
@@ -177,9 +181,11 @@ class LobbyController extends Controller
                 $newDM->save();
                 $lobby->dm_id = $newDM->id;
                 $lobby->save();
+                broadcast(new \App\Events\DungeonMasterChanged($lobby->lobby_code, $newDM->alias))->toOthers();
             } else {
                 $lobby->dm_id = null;
                 $lobby->save();
+                broadcast(new \App\Events\DungeonMasterChanged($lobby->lobby_code, null))->toOthers();
             }
         }
 
