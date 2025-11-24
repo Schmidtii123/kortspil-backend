@@ -29,3 +29,8 @@ Route::prefix('game')->group(function () {
 Route::prefix('cards')->group(function () {
     Route::get('/', [GameController::class, 'getAllCards']);
 });
+
+Route::prefix('chat')->group(function () {
+    Route::post('/send', [\App\Http\Controllers\ChatController::class, 'send']);
+    Route::get('/history/{lobby_code}', [\App\Http\Controllers\ChatController::class, 'history']);
+});
