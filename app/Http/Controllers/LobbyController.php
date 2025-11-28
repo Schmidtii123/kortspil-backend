@@ -47,15 +47,16 @@ class LobbyController extends Controller
             'alias' => 'required|string|max:50',
         ]);
 
-        $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
+        $lobby = \App\Models\Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
 
-        $player = Player::create([
-            'alias' => $validated['alias'],
-            'lobby_id' => $lobby->id,
-            'is_dm' => false,
-        ]);
+        $player = \App\Models\Player::firstOrCreate(
+            ['lobby_id' => $lobby->id, 'alias' => $validated['alias']],
+            ['is_dm' => false]
+        );
 
-        event(new \App\Events\PlayerJoined($lobby, $player));
+        if ($player->wasRecentlyCreated) {
+            event(new \App\Events\PlayerJoined($lobby, $player));
+        }
 
         return response()->json(['player' => $player]);
     }
