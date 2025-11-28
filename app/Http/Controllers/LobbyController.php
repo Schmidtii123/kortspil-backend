@@ -58,7 +58,7 @@ class LobbyController extends Controller
             event(new \App\Events\PlayerJoined($lobby, $player));
         }
 
-        return response()->json(['player' => $player]);
+        return response()->json(['lobby' => $lobby, 'player' => $player]);
     }
 
     public function startGame(Request $request)
