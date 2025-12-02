@@ -7,6 +7,7 @@ use App\Models\Lobby;
 use App\Events\CardDrawn;
 use App\Events\CardFlipped;
 use App\Events\PlayerTurnChanged;
+use App\Models\Card;
 
 class GameController extends Controller
 {
@@ -63,7 +64,9 @@ class GameController extends Controller
 
     public function getAllCards()
     {
-        $cards = \App\Models\Card::select('id','name','image_url','description')->orderBy('id')->get();
+        $cards = Card::select('id','name','image_url','description')
+            ->orderBy('id')
+            ->get();
         return response()->json($cards);
     }
 }

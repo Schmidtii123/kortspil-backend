@@ -12,10 +12,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('cards', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 100);
-            $table->string('image_url', 255);
-            $table->text('description');
+            $table->id();                 // id
+            $table->string('name', 100);  // name
+            $table->string('image_url');  // image_url
+            $table->text('description');  // description
         });
     }
 
