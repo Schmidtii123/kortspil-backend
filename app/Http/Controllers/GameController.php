@@ -60,4 +60,10 @@ class GameController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function getAllCards()
+    {
+        $cards = \App\Models\Card::select('id','name','image_url','description')->orderBy('id')->get();
+        return response()->json($cards);
+    }
 }
