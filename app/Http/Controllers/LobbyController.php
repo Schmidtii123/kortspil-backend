@@ -69,27 +69,35 @@ class LobbyController extends Controller
 
         $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
 
+        // Tildel avatars til alle spillere uden avatar
+        $players = Player::where('lobby_id', $lobby->id)->get();
+        $avatarCount = 8;
+        
+        foreach ($players as $player) {
+            if (!$player->avatar_url) {
+                $randomNum = rand(1, $avatarCount);
+                $player->avatar_url = "/assets/avatars/{$randomNum}.jpg";
+                $player->save();
+            }
+        }
+
         $lobby->game_started = true;
         $lobby->save();
 
-        // Broadcast game started event
         broadcast(new GameStarted($lobby->lobby_code))->toOthers();
 
-        return response()->json(['message' => 'Game started', 'lobby' => $lobby]);
+        return response()->json(['lobby' => $lobby]);
     }
 
     public function getLobby($code)
     {
-        $lobby = Lobby::with('players')->where('lobby_code', strtoupper($code))->firstOrFail();
+        $lobby = Lobby::where('lobby_code', strtoupper($code))
+            ->with(['players' => function ($query) {
+                $query->select('id', 'lobby_id', 'alias', 'is_dm', 'avatar_url'); // ← Tilføj avatar_url
+            }])
+            ->firstOrFail();
 
-        return response()->json([
-            'id' => $lobby->id,
-            'lobby_code' => $lobby->lobby_code,
-            'is_active' => $lobby->is_active,
-            'dm_id' => $lobby->dm_id,
-            'players' => $lobby->players,
-            'game_started' => $lobby->game_started ?? false,
-        ]);
+        return response()->json($lobby);
     }
 
     public function becomeDM(Request $request)

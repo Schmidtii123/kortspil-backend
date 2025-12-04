@@ -34,8 +34,18 @@ class GameStarted implements ShouldBroadcast
 
     public function broadcastWith()
     {
+        $lobby = \App\Models\Lobby::where('lobby_code', $this->lobbyCode)
+            ->with('players:id,lobby_id,alias,avatar_url')
+            ->first();
+        
+        $avatars = [];
+        foreach ($lobby->players as $p) {
+            $avatars[$p->alias] = $p->avatar_url;
+        }
+
         return [
             'lobby_code' => $this->lobbyCode,
+            'avatars' => $avatars,
         ];
     }
 }
