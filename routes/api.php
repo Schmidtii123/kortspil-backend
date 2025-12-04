@@ -9,6 +9,7 @@ Route::prefix('lobbies')->group(function () {
     Route::post('/create-lobby', [LobbyController::class, 'createLobby']);
     Route::post('/join-lobby', [LobbyController::class, 'joinLobby']);
     Route::post('/leave-lobby', [LobbyController::class, 'leaveLobby']);
+    Route::post('/kick-player', [LobbyController::class, 'kickPlayer']);
     Route::post('/start-game', [LobbyController::class, 'startGame']);
     Route::post('/become-dm', [LobbyController::class, 'becomeDM']);
     Route::post('/become-player', [LobbyController::class, 'becomePlayer']);

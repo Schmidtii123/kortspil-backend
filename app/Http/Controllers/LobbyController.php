@@ -196,4 +196,39 @@ class LobbyController extends Controller
             'game_started' => $lobby->game_started ?? false
         ]);
     }
+
+    public function kickPlayer(Request $request)
+    {
+        $validated = $request->validate([
+            'lobby_code' => 'required|string',
+            'player_alias' => 'required|string',
+            'dm_id' => 'required|integer',
+        ]);
+
+        $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
+
+        // Verificer at requester er DM
+        if ($lobby->dm_id !== $validated['dm_id']) {
+            return response()->json(['error' => 'Only DM can kick players'], 403);
+        }
+
+        $player = Player::where('lobby_id', $lobby->id)
+            ->where('alias', $validated['player_alias'])
+            ->first();
+
+        if (!$player) {
+            return response()->json(['error' => 'Player not found'], 404);
+        }
+
+        // Kan ikke kicke sig selv
+        if ($player->id === $lobby->dm_id) {
+            return response()->json(['error' => 'Cannot kick yourself'], 400);
+        }
+
+        $player->delete();
+
+        broadcast(new \App\Events\PlayerKicked($lobby->lobby_code, $player->alias))->toOthers();
+
+        return response()->json(['message' => 'Player kicked', 'alias' => $player->alias]);
+    }
 }
