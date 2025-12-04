@@ -25,4 +25,9 @@ class PlayerKicked implements ShouldBroadcast
     {
         return ['kicked_alias' => $this->kickedAlias];
     }
+
+    public function broadcastAs()
+    {
+        return 'PlayerKicked';
+    }
 }
