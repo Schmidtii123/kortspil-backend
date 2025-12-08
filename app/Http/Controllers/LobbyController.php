@@ -169,9 +169,15 @@ class LobbyController extends Controller
 
         // Fjern spilleren
         $player = Player::find($validated['player_id']);
-        if ($player) {
-            $player->delete();
+        if (!$player) {
+            return response()->json(['error' => 'Player not found'], 404);
         }
+
+        $playerAlias = $player->alias; 
+        $player->delete();
+
+        // Broadcast at spilleren har forladt
+        broadcast(new \App\Events\PlayerLeft($lobby->lobby_code, $playerAlias))->toOthers();
 
         // Tjek om der er flere spillere tilbage
         $remainingPlayers = Player::where('lobby_id', $lobby->id)->count();
