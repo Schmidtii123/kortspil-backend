@@ -38,13 +38,26 @@ class GameController extends Controller
 
         $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
 
-        // Broadcast player turn changed event
         broadcast(new PlayerTurnChanged($lobby->lobby_code, $validated['player_name']))->toOthers();
 
         return response()->json([
             'message' => 'Player turn set',
             'player_name' => $validated['player_name']
         ]);
+    }
+
+    public function clearPlayerTurn(Request $request)
+    {
+        $validated = $request->validate([
+            'lobby_code' => 'required|string',
+        ]);
+
+        $lobby = Lobby::where('lobby_code', strtoupper($validated['lobby_code']))->firstOrFail();
+
+        // Send null som player_name for at clear turn
+        broadcast(new PlayerTurnChanged($lobby->lobby_code, null))->toOthers();
+
+        return response()->json(['message' => 'Player turn cleared']);
     }
 
     public function flipCard(Request $request)

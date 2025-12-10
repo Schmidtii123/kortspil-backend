@@ -25,6 +25,7 @@ Route::prefix('game')->group(function () {
     Route::post('/draw-card', [GameController::class, 'drawCard']);
     Route::post('/flip-card', [GameController::class, 'flipCard']);
     Route::post('/set-player-turn', [GameController::class, 'setPlayerTurn']);
+    Route::post('/clear-player-turn', [GameController::class, 'clearPlayerTurn']);
 });
 
 Route::prefix('cards')->group(function () {
