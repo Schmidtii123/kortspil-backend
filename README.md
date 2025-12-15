@@ -1,59 +1,360 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Crit Cards – Backend (Laravel 11 API)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+En Laravel REST API med WebSocket broadcasting via Pusher til at håndtere D&D critical hit kort i realtid.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Live Demo
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Backend API**: [https://kortspil-backend-production.up.railway.app](https://kortspil-backend-production.up.railway.app)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Laravel 11** (REST API + broadcasting)
+- **MySQL** (Railway-hosted database)
+- **Pusher** (WebSocket server til realtids-events)
+- **PHP 8.3**
+- **Railway** (deployment + MySQL hosting)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Kør Projektet Lokalt
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 1. Clone repository
+```bash
+git clone https://github.com/Schmidtii123/kortspil-backend
+cd kortspil-backend
+```
 
-### Premium Partners
+### 2. Installer dependencies
+```bash
+composer install
+npm install  # For Vite/Laravel assets
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 3. Konfigurer miljøvariabler
 
-## Contributing
+Kopier `.env.example` til `.env`:
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Opdater følgende i `.env`:
 
-## Code of Conduct
+**Database (MySQL):**
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=crit_cards
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Pusher (Hent keys fra [pusher.com](https://pusher.com)):**
+```env
+BROADCAST_CONNECTION=pusher
+PUSHER_APP_ID=your_app_id
+PUSHER_APP_KEY=your_app_key
+PUSHER_APP_SECRET=your_app_secret
+PUSHER_APP_CLUSTER=eu
+```
 
-## Security Vulnerabilities
+**CORS (Frontend URL):**
+```env
+FRONTEND_URL=http://localhost:5173
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4. Generer application key
+```bash
+php artisan key:generate
+```
 
-## License
+### 5. Kør migrations + seed database
+```bash
+php artisan migrate:fresh --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Det opretter:
+- `lobbies` (lobby-data + game_started flag)
+- `players` (spillere med alias, is_dm, avatar_url)
+- `chat_messages` (chat-historik per lobby)
+- `cards` (10 kort med beskrivelser)
+
+### 6. Start Laravel development server
+```bash
+php artisan serve
+```
+
+Backend kører nu på **http://127.0.0.1:8000**
+
+---
+
+## Projekt-struktur
+
+```
+app/
+├── Events/             # CardDrawn, CardFlipped, GameStarted, etc.
+├── Http/Controllers/   # LobbyController, GameController, ChatController
+└── Models/             # Lobby, Player, Card, ChatMessage
+
+database/
+├── migrations/         # Database schema
+└── seeders/            # CardSeeder (seeder 10 kort)
+
+routes/
+├── api.php             # REST endpoints
+└── channels.php        # Pusher channel auth
+```
+
+---
+
+## API Endpoints
+
+### Lobby Management
+```http
+POST   /api/lobbies/create-lobby       # Opret lobby
+POST   /api/lobbies/join-lobby         # Join lobby
+GET    /api/lobbies/lobby/{code}       # Hent lobby-data
+POST   /api/lobbies/leave-lobby        # Forlad lobby
+POST   /api/lobbies/become-dm          # Skift til DM-rolle
+POST   /api/lobbies/become-player      # Skift til Player-rolle
+POST   /api/lobbies/kick-player        # Kick spiller (kun DM)
+POST   /api/lobbies/start-game         # Start spil (broadcaster avatars)
+```
+
+**Eksempel request (Create Lobby):**
+```json
+POST /api/lobbies/create-lobby
+{
+  "alias": "Emil"
+}
+```
+
+**Eksempel response:**
+```json
+{
+  "lobby": {
+    "id": 1,
+    "lobby_code": "ABC123",
+    "dm_id": 1,
+    "is_active": true,
+    "game_started": false
+  },
+  "player": {
+    "id": 1,
+    "alias": "Emil",
+    "is_dm": true,
+    "lobby_id": 1
+  }
+}
+```
+
+---
+
+### Game Actions
+```http
+POST   /api/game/draw-card        # Træk kort
+POST   /api/game/flip-card        # Vend kort
+POST   /api/game/set-player-turn  # Sæt spiller-tur (DM only)
+POST   /api/game/clear-player-turn # Clear tur (DM only)
+```
+
+**Eksempel request (Draw Card):**
+```json
+POST /api/game/draw-card
+{
+  "lobby_code": "ABC123",
+  "card_number": 5
+}
+```
+
+**Backend broadcaster:**
+```php
+broadcast(new CardDrawn($lobby->lobby_code, $validated['card_number']))->toOthers();
+```
+
+---
+
+### Chat
+```http
+POST   /api/chat/send             # Send besked
+GET    /api/chat/history/{code}   # Hent chat-historik
+```
+
+**Eksempel request (Send Message):**
+```json
+POST /api/chat/send
+{
+  "lobby_code": "ABC123",
+  "sender": "Emil",
+  "message": "Ready to start!"
+}
+```
+
+---
+
+### Cards
+```http
+GET    /api/cards                 # Hent alle kort (fallback hvis DB tom)
+```
+
+**Eksempel response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Card 1",
+    "image_url": "/assets/cards/1.webp",
+    "description": "Lost hand: you can no longer wield two-handed weapons or shields."
+  },
+  ...
+]
+```
+
+---
+
+## WebSocket Broadcasting (Pusher)
+
+Backend broadcaster følgende events via Pusher:
+
+### Event-eksempler
+
+**1. GameStarted** (broadcaster avatars):
+```php
+class GameStarted implements ShouldBroadcast {
+    public function broadcastOn() {
+        return new Channel('lobby.' . $this->lobbyCode);
+    }
+    
+    public function broadcastWith() {
+        $lobby = Lobby::where('lobby_code', $this->lobbyCode)
+            ->with('players:id,lobby_id,alias,avatar_url')
+            ->first();
+        
+        $avatars = [];
+        foreach ($lobby->players as $p) {
+            $avatars[$p->alias] = $p->avatar_url;
+        }
+        
+        return ['lobby_code' => $this->lobbyCode, 'avatars' => $avatars];
+    }
+}
+```
+
+**2. CardDrawn:**
+```php
+broadcast(new CardDrawn($lobby->lobby_code, $validated['card_number']))->toOthers();
+```
+
+**3. ChatMessageSent:**
+```php
+broadcast(new ChatMessageSent($lobby->lobby_code, $chat->sender, $chat->message, $chat->created_at->toISOString()))->toOthers();
+```
+
+---
+
+## Database Schema
+
+### `lobbies`
+```sql
+CREATE TABLE lobbies (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  lobby_code VARCHAR(8) UNIQUE NOT NULL,
+  dm_id BIGINT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  game_started BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  FOREIGN KEY (dm_id) REFERENCES players(id) ON DELETE SET NULL
+);
+```
+
+### `players`
+```sql
+CREATE TABLE players (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  alias VARCHAR(50) NOT NULL,
+  lobby_id BIGINT NOT NULL,
+  is_dm BOOLEAN DEFAULT FALSE,
+  avatar_url VARCHAR(255) NULL,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  UNIQUE KEY players_lobby_alias_unique (lobby_id, alias),
+  FOREIGN KEY (lobby_id) REFERENCES lobbies(id) ON DELETE CASCADE
+);
+```
+
+** Avatar-logic:** Avatars tildeles ved `startGame()` i [`LobbyController`](app/Http/Controllers/LobbyController.php):
+
+```php
+foreach ($players as $player) {
+    if (!$player->avatar_url) {
+        $randomNum = rand(1, 8);
+        $player->avatar_url = "/assets/avatars/{$randomNum}.jpg";
+        $player->save();
+    }
+}
+```
+
+### `chat_messages`
+```sql
+CREATE TABLE chat_messages (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  lobby_id BIGINT NOT NULL,
+  sender VARCHAR(50) NOT NULL,
+  message VARCHAR(500) NOT NULL,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  FOREIGN KEY (lobby_id) REFERENCES lobbies(id) ON DELETE CASCADE
+);
+```
+
+---
+
+## Deployment (Railway)
+
+### 1. Link GitHub repository i Railway dashboard
+
+### 2. Railway auto-detecter Laravel
+
+Railway kører automatisk:
+```bash
+composer install
+php artisan migrate --force
+```
+
+
+### 3. Tilføj environment variables
+
+Railway injecter automatisk database credentials. Tilføj manuelt:
+
+```env
+PUSHER_APP_ID=your_app_id
+PUSHER_APP_KEY=your_app_key
+PUSHER_APP_SECRET=your_app_secret
+PUSHER_APP_CLUSTER=eu
+FRONTEND_URL=https://chipper-moonbeam-100da6.netlify.app
+```
+
+### 4. Deploy
+Railway rebuilder automatisk ved push til `main`.
+
+---
+
+## 📚 Relateret Dokumentation
+
+- **Frontend app:** [crit-cards-app/README.md](../crit-cards-app/README.md)
+- **API routes:** [`routes/api.php`](routes/api.php)
+- **Database migrations:** [`database/migrations/`](database/migrations/)
+- **Pusher docs:** [https://pusher.com/docs](https://pusher.com/docs)
+
+---
+
+## Forfatter
+
+**Emil Schmidt**  
+Webudvikling  
+December/Januar 2025/2026
