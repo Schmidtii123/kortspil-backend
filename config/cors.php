@@ -4,7 +4,8 @@ return [
     'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
     'allowed_methods' => ['*'],
     'allowed_origins' => array_filter([
-        env('FRONTEND_URL', 'https://chipper-moonbeam-100da6.netlify.app'),
+        env('FRONTEND_URL', 'https://critcard.netlify.app'),
+        'https://critcard.netlify.app',
         'https://chipper-moonbeam-100da6.netlify.app',
         'http://localhost:3000',
         'http://localhost:5173',
@@ -13,8 +14,8 @@ return [
         'http://127.0.0.1:4173',
     ]),
     'allowed_origins_patterns' => [
-        '^http://localhost(:[0-9]+)?$',
-        '^http://127\.0\.0\.1(:[0-9]+)?$',
+        '/^http:\/\/localhost(?::[0-9]+)?$/',
+        '/^http:\/\/127\.0\.0\.1(?::[0-9]+)?$/',
     ],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
